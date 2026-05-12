@@ -13,7 +13,7 @@ export const ProfilePage = () => {
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
-    }
+    },
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
 
@@ -45,82 +45,61 @@ export const ProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-accent-olive" />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">Profile Settings</h1>
+      <div className="mx-auto max-w-2xl">
+        <h1 className="mb-8 text-4xl font-bold text-neutral-900">Profile Settings</h1>
 
-        {/* User Info Card */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-              <User className="w-8 h-8 text-white" />
+        <div className="surface-card mb-6 p-8">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-accent-olive bg-gradient-primary shadow-button">
+              <User className="h-8 w-8 text-neutral-900" />
             </div>
             <div>
-              <h2 className="text-2xl font-semibold text-gray-900">{user?.name}</h2>
-              <p className="text-gray-600">{user?.email}</p>
+              <h2 className="text-2xl font-semibold text-neutral-900">{user?.name}</h2>
+              <p className="text-neutral-700">{user?.email}</p>
             </div>
           </div>
         </div>
 
-        {/* Edit Profile Form */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Edit Profile</h2>
+        <div className="surface-card mb-6 p-8">
+          <h2 className="mb-6 text-2xl font-semibold text-neutral-900">Edit Profile</h2>
           <form onSubmit={handleSubmit(onSubmitProfile)} className="space-y-4">
-            {/* Full Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-              <input
-                {...register('name', { required: 'Full name is required' })}
-                type="text"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+              <label className="mb-2 block text-sm font-medium text-neutral-700">Full Name</label>
+              <input {...register('name', { required: 'Full name is required' })} type="text" className="field-control" />
+              {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
             </div>
 
-            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input
-                {...register('email', { required: 'Email is required' })}
-                type="email"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+              <label className="mb-2 block text-sm font-medium text-neutral-700">Email</label>
+              <input {...register('email', { required: 'Email is required' })} type="email" className="field-control" />
+              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
             </div>
 
-            {/* Save Button */}
-            <button
-              type="submit"
-              disabled={updatingProfile}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
-            >
+            <button type="submit" disabled={updatingProfile} className="btn-primary w-full">
               {updatingProfile && <Loader2 size={18} className="animate-spin" />}
               {updatingProfile ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
         </div>
 
-        {/* Account Actions */}
-        <div className="bg-white rounded-lg shadow-lg p-8 space-y-4">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Account Actions</h2>
-          
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition"
-          >
+        <div className="surface-card space-y-4 p-8">
+          <h2 className="mb-6 text-2xl font-semibold text-neutral-900">Account Actions</h2>
+
+          <button onClick={handleLogout} className="btn-secondary w-full">
             <LogOut size={18} /> Logout
           </button>
 
           <button
             onClick={handleDeleteAccount}
-            className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 font-semibold text-white transition hover:bg-red-700"
           >
             Delete Account
           </button>

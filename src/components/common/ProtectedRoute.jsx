@@ -7,8 +7,8 @@ export const ProtectedRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      <div className="flex h-screen items-center justify-center bg-gradient-subtle">
+        <Loader2 className="h-8 w-8 animate-spin text-accent-olive" />
       </div>
     );
   }

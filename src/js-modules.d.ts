@@ -6,7 +6,6 @@ declare module "*.jsx" {
   export const Navbar: ComponentType;
   export const LoginPage: ComponentType;
   export const RegisterPage: ComponentType;
-  export const ResetPasswordPage: ComponentType;
   export const GeneratorPage: ComponentType;
   export const GalleryPage: ComponentType;
   export const ProfilePage: ComponentType;
@@ -23,7 +22,6 @@ declare module "*.js" {
     login: (...args: unknown[]) => Promise<unknown>;
     register: (...args: unknown[]) => Promise<unknown>;
     logout: () => void;
-    resetPassword: (...args: unknown[]) => Promise<unknown>;
     isAuthenticated: boolean;
   };
 }
