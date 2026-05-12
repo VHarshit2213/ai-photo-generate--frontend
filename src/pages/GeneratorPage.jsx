@@ -76,7 +76,7 @@ export const GeneratorPage = () => {
   const requiredUploads = selectedCategoryOptions.length;
   const uploadedCount = Object.values(selectedFiles).filter(Boolean).length;
   const uploadProgress = requiredUploads ? Math.round((uploadedCount / requiredUploads) * 100) : 0;
-  const canGenerate = Boolean(selectedCategoryId) && uploadedCount === requiredUploads && !generating;
+  const canGenerate = Boolean(selectedCategoryId) && !generating;
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -155,12 +155,6 @@ export const GeneratorPage = () => {
   const onSubmit = async (data) => {
     if (!selectedCategory) {
       toast.error('Select a category first');
-      return;
-    }
-
-    const missingOptions = selectedCategoryOptions.filter((option) => !selectedFiles[option]);
-    if (missingOptions.length > 0) {
-      toast.error(`Upload ${missingOptions.join(', ')} image${missingOptions.length > 1 ? 's' : ''}`);
       return;
     }
 
