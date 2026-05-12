@@ -1,7 +1,10 @@
 import { useContext, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { authAPI } from "../api/auth";
+import { USER_KEY } from "../api/constants";
 import { toast } from "sonner";
+
+const getUpdatedUser = (response) => response?.data || response;
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -70,6 +73,23 @@ export const useAuth = () => {
     [setLoading, setError],
   );
 
+  const updateProfile = useCallback(
+    async (data) => {
+      setError(null);
+      try {
+        const response = await authAPI.updateProfile(data);
+        const updatedUser = getUpdatedUser(response);
+        setUser(updatedUser);
+        localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+        return updatedUser;
+      } catch (err) {
+        setError(err.message || "Profile update failed");
+        throw err;
+      }
+    },
+    [setUser, setError],
+  );
+
   return {
     user,
     loading,
@@ -78,6 +98,7 @@ export const useAuth = () => {
     register,
     logout,
     resetPassword,
+    updateProfile,
     isAuthenticated: !!user,
   };
 };

@@ -2,9 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global Reset */
 * {
   @apply box-border;
 }
+
 html,
 body,
 #root {
@@ -12,36 +14,36 @@ body,
   height: 100%;
 }
 
+/* Body */
 body {
   margin: 0;
-  background: #f5f9f2;
-  color: #2b4a2b;
+  background: theme("colors.neutral.bg");
+  color: theme("colors.neutral.50");
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Components */
 @layer components {
   .app-page {
-    @apply min-h-screen bg-gradient-subtle text-neutral-900;
+    @apply min-h-screen bg-gradient-subtle text-neutral-50;
   }
 
   .surface-card {
-    @apply rounded-lg border border-white/70 bg-white/85 shadow-card backdrop-blur;
+    @apply rounded-lg border border-primary-100/80 bg-white text-neutral-900 shadow-[0_24px_70px_rgba(20,15,28,0.22)] backdrop-blur;
   }
 
   .field-control {
-    @apply w-full rounded-lg border-2 border-neutral-300 bg-neutral-50 px-4 py-3 text-neutral-900 outline-none transition-all placeholder:text-neutral-600 focus:border-primary-500 focus:bg-accent-yellow focus:bg-opacity-20 focus:shadow-focus;
+    @apply w-full rounded-lg border-2 border-primary-100 bg-white px-4 py-3 text-neutral-900 outline-none transition-all placeholder:text-neutral-500 focus:border-primary-500 focus:bg-primary-50/40 focus:shadow-focus;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-accent-olive bg-gradient-primary px-4 py-3 font-semibold text-neutral-900 shadow-button transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-primary-600 bg-primary-600 px-4 py-3 font-semibold text-white shadow-button transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-500 hover:shadow-card-hover active:translate-y-0 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-300 disabled:text-neutral-600 disabled:shadow-none;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-3 font-semibold text-neutral-900 transition hover:border-accent-olive hover:bg-primary-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-primary-100 bg-white px-4 py-3 font-semibold text-neutral-900 transition hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700;
   }
 }
-
-/* index.css */
 
 /* Smooth Scrolling */
 html {
@@ -56,7 +58,7 @@ html {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: theme("colors.neutral.100");
+  background: theme("colors.neutral.surface");
   border-radius: 999px;
 }
 
@@ -64,19 +66,20 @@ html {
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(
     180deg,
-    theme("colors.accent.lime") 0%,
+    theme("colors.accent.purple") 0%,
     theme("colors.primary.500") 100%
   );
+
   border-radius: 999px;
-  border: 2px solid theme("colors.neutral.100");
+  border: 2px solid theme("colors.neutral.surface");
   transition: all 0.3s ease;
 }
 
-/* Hover Effect */
+/* Hover */
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(
     180deg,
-    theme("colors.accent.500") 0%,
+    theme("colors.accent.pink") 0%,
     theme("colors.primary.700") 100%
   );
 }
@@ -91,17 +94,19 @@ html {
   background: transparent;
 }
 
-/* Firefox Support */
+/* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: theme("colors.primary.500") theme("colors.neutral.100");
+
+  scrollbar-color: theme("colors.primary.500") theme("colors.neutral.surface");
 }
 
+/* Hide Scrollbar */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
 .no-scrollbar {
-  -ms-overflow-style: none; /* IE & Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

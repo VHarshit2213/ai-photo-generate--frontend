@@ -1,93 +1,85 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Menu, X } from 'lucide-react';
+import { Image, Menu, User, Wand2, X } from 'lucide-react';
 import { useState } from 'react';
+import { getInitial, getProfileImageUrl } from '../../utils/profileImage';
+
+const navItems = [
+  { to: '/generate', label: 'Generate', icon: Wand2 },
+  { to: '/gallery', label: 'Gallery', icon: Image },
+  { to: '/profile', label: 'Profile', icon: User },
+];
 
 export const Navbar = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
   const isActive = (path) => location.pathname === path;
+  const profileImage = getProfileImageUrl(user);
 
   if (!isAuthenticated) return null;
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-primary-200 bg-white/85 shadow-sm backdrop-blur">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/generate" className="text-2xl font-bold text-neutral-900 hover:text-accent-olive">
-            AI-photo
+    <nav className="sticky top-0 z-40 border-b border-white/15 bg-neutral-bg/70 shadow-lg shadow-neutral-900/20 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <Link to="/generate" className="flex items-center gap-3 text-xl font-bold text-white">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-white text-primary-700 shadow-button">
+              FS
+            </span>
+            Fashion Studio
           </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link
-              to="/generate"
-              className={`font-medium transition ${
-                isActive('/generate')
-                  ? 'text-neutral-900 border-b-2 border-accent-olive'
-                  : 'text-neutral-700 hover:text-neutral-900'
-              }`}
-            >
-              Generate
-            </Link>
-            <Link
-              to="/gallery"
-              className={`font-medium transition ${
-                isActive('/gallery')
-                  ? 'text-neutral-900 border-b-2 border-accent-olive'
-                  : 'text-neutral-700 hover:text-neutral-900'
-              }`}
-            >
-              Gallery
-            </Link>
-            <Link
-              to="/profile"
-              className={`font-medium transition ${
-                isActive('/profile')
-                  ? 'text-neutral-900 border-b-2 border-accent-olive'
-                  : 'text-neutral-700 hover:text-neutral-900'
-              }`}
-            >
-              Profile
-            </Link>
+          <div className="hidden items-center gap-2 md:flex">
+            {navItems.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition ${isActive(to)
+                  ? 'bg-white text-primary-700 shadow-card'
+                  : 'text-primary-100 hover:bg-white/10 hover:text-white'
+                  }`}
+              >
+                <Icon size={18} />
+                {label}
+              </Link>
+            ))}
           </div>
 
-          {/* Mobile Menu Button */}
+          <div className="hidden items-center gap-3 md:flex">
+            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-primary-100 text-sm font-bold text-primary-700">
+              {profileImage ? (
+                <img src={profileImage} alt={user?.name || 'Profile avatar'} className="h-full w-full object-cover" />
+              ) : (
+                getInitial(user)
+              )}
+            </div>
+          </div>
+
           <button
-            className="md:hidden p-2 rounded-lg text-neutral-900 hover:bg-primary-100"
+            className="rounded-lg p-2 text-white hover:bg-white/10 md:hidden"
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
           >
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {menuOpen && (
           <div className="md:hidden pb-4 space-y-2">
-            <Link
-              to="/generate"
-              className="block px-4 py-2 text-neutral-700 hover:bg-primary-100 rounded-lg"
-              onClick={() => setMenuOpen(false)}
-            >
-              Generate
-            </Link>
-            <Link
-              to="/gallery"
-              className="block px-4 py-2 text-neutral-700 hover:bg-primary-100 rounded-lg"
-              onClick={() => setMenuOpen(false)}
-            >
-              Gallery
-            </Link>
-            <Link
-              to="/profile"
-              className="block px-4 py-2 text-neutral-700 hover:bg-primary-100 rounded-lg"
-              onClick={() => setMenuOpen(false)}
-            >
-              Profile
-            </Link>
+            {navItems.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`flex items-center gap-3 rounded-lg px-4 py-3 font-medium ${isActive(to) ? 'bg-white text-primary-700' : 'text-primary-100 hover:bg-white/10'
+                  }`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <Icon size={18} />
+                {label}
+              </Link>
+            ))}
           </div>
         )}
       </div>

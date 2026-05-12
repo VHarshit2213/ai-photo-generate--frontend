@@ -33,10 +33,14 @@ export const authAPI = {
   },
 
   updateProfile: async (data) => {
-    const formData = new FormData();
-    Object.keys(data).forEach((key) => {
-      formData.append(key, data[key]);
-    });
+    const formData = data instanceof FormData ? data : new FormData();
+
+    if (!(data instanceof FormData)) {
+      Object.keys(data).forEach((key) => {
+        formData.append(key, data[key]);
+      });
+    }
+
     return apiClient.put(API_ENDPOINTS.AUTH_PROFILE, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
