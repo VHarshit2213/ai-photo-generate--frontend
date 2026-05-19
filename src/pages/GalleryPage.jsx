@@ -3,6 +3,8 @@ import { generatorAPI } from '../api/generator';
 import { ChevronLeft, ChevronRight, Download, Eye, Loader2, Search, Sparkles, Trash2, X } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
 const getPhotoImages = (photo) => {
   if (Array.isArray(photo?.generatedImages)) return photo.generatedImages;
   if (Array.isArray(photo?.images)) return photo.images;
@@ -13,18 +15,34 @@ const getPhotoImages = (photo) => {
 
 const getImageUrl = (image) => image?.imageUrl || image?.url || image;
 
+const isGeneratedWithin24Hours = (photo) => {
+  if (!photo?.createdAt) return true;
+  const createdTime = new Date(photo.createdAt).getTime();
+  if (Number.isNaN(createdTime)) return true;
+  return Date.now() - createdTime <= DAY_IN_MS;
+};
+
+const getFilename = (item) => {
+  const datePart = item?.createdAt
+    ? new Date(item.createdAt).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
+  return `generated-image-${datePart}-${item.activeImageIndex + 1}.png`;
+};
+
 export const GalleryPage = () => {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [previewIndex, setPreviewIndex] = useState(null);
+  const [activeSlides, setActiveSlides] = useState({});
 
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
         setLoading(true);
         const response = await generatorAPI.getGeneratedPhotos();
-        setPhotos(response.data || response.photos || []);
+        const freshPhotos = (response.data || []).filter(isGeneratedWithin24Hours);
+        setPhotos(freshPhotos);
       } catch (err) {
         toast.error('Failed to load gallery');
       } finally {
@@ -38,27 +56,77 @@ export const GalleryPage = () => {
   const galleryItems = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
 
-    return photos
-      .flatMap((photo) =>
-        getPhotoImages(photo).map((image, imageIndex) => ({
-          photo,
-          image,
-          imageIndex,
-          url: getImageUrl(image),
-          id: `${photo?._id || photo?.id || 'photo'}-${imageIndex}`,
-        })),
-      )
-      .filter((item) => item.url)
-      .filter((item) => {
-        if (!term) return true;
-        const title = item.photo?.title || '';
-        const prompt = item.photo?.prompt || '';
-        const environment = item.photo?.environment || '';
-        return `${title} ${prompt} ${environment}`.toLowerCase().includes(term);
-      });
-  }, [photos, searchTerm]);
+    return photos.filter((item) => {
+      if (!term) return true;
+
+      const environment = item.environment || item.photo?.environment || '';
+
+      return `${environment}`
+        .toLowerCase()
+        .includes(term);
+    }).map((item) => {
+      const images = getPhotoImages(item).map(getImageUrl).filter(Boolean);
+      const activeImageIndex = Math.min(activeSlides[item._id] || 0, Math.max(images.length - 1, 0));
+
+      return {
+        ...item,
+        images,
+        activeImageIndex,
+        activeImageUrl: images[activeImageIndex],
+      };
+    }).filter((item) => item.activeImageUrl);
+  }, [photos, searchTerm, activeSlides]);
+
+  const updateSlide = (itemId, nextIndex) => {
+    setActiveSlides((current) => ({
+      ...current,
+      [itemId]: nextIndex,
+    }));
+  };
+
+  const moveSlide = (event, item, direction) => {
+    event.stopPropagation();
+    if (item.images.length < 2) return;
+
+    const nextIndex = (item.activeImageIndex + direction + item.images.length) % item.images.length;
+    updateSlide(item._id, nextIndex);
+  };
+
+  const selectSlide = (event, itemId, imageIndex) => {
+    event.stopPropagation();
+    updateSlide(itemId, imageIndex);
+  };
+
+  const openPreview = (index) => {
+    setPreviewIndex(index);
+  };
 
   const activeItem = previewIndex === null ? null : galleryItems[previewIndex];
+
+  const setPreviewSlide = (imageIndex) => {
+    if (!activeItem) return;
+    updateSlide(activeItem._id, imageIndex);
+  };
+
+  const movePreviewSlide = (direction) => {
+    if (!activeItem || activeItem.images.length < 2) return;
+
+    const nextIndex = (activeItem.activeImageIndex + direction + activeItem.images.length) % activeItem.images.length;
+    setPreviewSlide(nextIndex);
+  };
+
+  useEffect(() => {
+    if (previewIndex !== null && previewIndex >= galleryItems.length) {
+      setPreviewIndex(galleryItems.length ? galleryItems.length - 1 : null);
+    }
+  }, [galleryItems.length, previewIndex]);
+
+  useEffect(() => {
+    setActiveSlides((current) => {
+      const validIds = new Set(photos.map((photo) => photo._id));
+      return Object.fromEntries(Object.entries(current).filter(([id]) => validIds.has(id)));
+    });
+  }, [photos]);
 
   useEffect(() => {
     if (!activeItem) return undefined;
@@ -67,6 +135,8 @@ export const GalleryPage = () => {
       if (event.key === 'Escape') setPreviewIndex(null);
       if (event.key === 'ArrowRight') setPreviewIndex((current) => (current + 1) % galleryItems.length);
       if (event.key === 'ArrowLeft') setPreviewIndex((current) => (current - 1 + galleryItems.length) % galleryItems.length);
+      if (event.key === 'ArrowUp') movePreviewSlide(-1);
+      if (event.key === 'ArrowDown') movePreviewSlide(1);
     };
 
     window.addEventListener('keydown', onKeyDown);
@@ -80,8 +150,7 @@ export const GalleryPage = () => {
 
   const handleDownload = async (item) => {
     try {
-      const title = item.photo?.title || 'generated-image';
-      await generatorAPI.downloadPhoto(item.url, `${title}-${item.imageIndex + 1}.png`);
+      await generatorAPI.downloadPhoto(item.activeImageUrl, getFilename(item));
       toast.success('Image downloaded');
     } catch (err) {
       toast.error('Failed to download image');
@@ -89,7 +158,7 @@ export const GalleryPage = () => {
   };
 
   const handleDelete = (photoId) => {
-    setPhotos((currentPhotos) => currentPhotos.filter((photo) => (photo._id || photo.id) !== photoId));
+    setPhotos((currentPhotos) => currentPhotos.filter((photo) => (photo._id) !== photoId));
     setPreviewIndex(null);
     toast.success('Image removed from gallery');
   };
@@ -114,6 +183,16 @@ export const GalleryPage = () => {
           </p>
           <h1 className="mb-2 text-4xl font-bold">Past generated images</h1>
           <p className="max-w-2xl text-neutral-600">Browse, preview, and download the images you have already created.</p>
+          <label className="mt-5 flex max-w-md items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-neutral-700 focus-within:border-primary-300 focus-within:bg-white">
+            <Search size={18} className="shrink-0 text-neutral-400" />
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by environment"
+              className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400"
+            />
+          </label>
         </div>
 
         {galleryItems.length === 0 ? (
@@ -124,31 +203,55 @@ export const GalleryPage = () => {
             </a>
           </div>
         ) : (
-          <div className="columns-1 gap-6 space-y-6 md:columns-2 xl:columns-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {galleryItems.map((item, index) => (
               <article
-                key={item._id}
+                key={item?._id}
                 className="group break-inside-avoid overflow-hidden rounded-lg border border-primary-100 bg-white shadow-[0_18px_45px_rgba(20,15,28,0.16)] transition duration-300 hover:-translate-y-1 hover:shadow-card-hover"
               >
-                <button type="button" className="relative block w-full text-left" onClick={() => setPreviewIndex(index)}>
-                  <img src={item.url} alt={`Generated image ${index + 1}`} className="w-full h-full min-h-72 object-cover" />
-                  <span className="absolute inset-0 flex items-center justify-center bg-neutral-900/0 opacity-0 transition group-hover:bg-neutral-900/35 group-hover:opacity-100">
+                <div className="relative">
+                  <button type="button" className="block w-full text-left" onClick={() => openPreview(index)}>
+                    <img src={item.activeImageUrl} alt={`Generated image ${index + 1}`} className="h-full min-h-72 w-full object-cover" />
+                  </button>
+
+                  {item.images.length > 1 && (
+                    <>
+                      <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 rounded-full bg-neutral-950/55 px-2.5 py-2">
+                        {item.images.map((imageUrl, imageIndex) => (
+                          <button
+                            type="button"
+                            key={`${imageUrl}-${imageIndex}`}
+                            onClick={(event) => selectSlide(event, item._id, imageIndex)}
+                            aria-label={`Show generated image ${imageIndex + 1}`}
+                            className={`h-2 w-2 rounded-full transition ${imageIndex === item.activeImageIndex ? 'bg-white' : 'bg-white/45 hover:bg-white/75'}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  <button type="button" onClick={() => openPreview(index)} className="absolute inset-0 z-10 flex items-center justify-center bg-neutral-900/0 opacity-0 transition group-hover:bg-neutral-900/35 group-hover:opacity-100" aria-label="Preview generated image">
                     <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold text-primary-700 shadow-lg">
                       <Eye size={18} /> Preview
                     </span>
-                  </span>
-                </button>
+                  </button>
+                </div>
 
                 <div className="p-4">
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h3 className="truncate font-semibold text-neutral-900">Generated image</h3>
-                      <p className="mt-1 text-xs text-neutral-500">
-                        {item.photo?.createdAt ? new Date(item.photo.createdAt).toLocaleDateString() : 'Saved image'}
+                      <div className='flex gap-3'> <p className="mt-1 text-xs text-neutral-500">
+                        {item?.createdAt ? new Date(item?.createdAt).toLocaleDateString() : 'Saved image'}
                       </p>
+                        {item.images.length > 1 && (
+                          <p className="mt-1 text-xs font-medium text-neutral-500">
+                            {item.activeImageIndex + 1} of {item.images.length}
+                          </p>
+                        )}</div>
                     </div>
                     <span className="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold capitalize text-primary-700">
-                      {item.photo?.environment || 'AI'}
+                      {item?.environment || 'AI'}
                     </span>
                   </div>
 
@@ -157,14 +260,14 @@ export const GalleryPage = () => {
                     <button type="button" onClick={() => handleDownload(item)} className="btn-secondary flex-1 py-2 text-sm">
                       <Download size={16} /> Download
                     </button>
-                    <button
+                    {/* <button
                       type="button"
-                      onClick={() => handleDelete(item.photo?._id)}
+                      onClick={() => handleDelete(item?._id)}
                       className="inline-flex items-center justify-center rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 transition hover:bg-red-100"
                       aria-label="Delete image"
                     >
                       <Trash2 size={16} />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </article>
@@ -206,12 +309,31 @@ export const GalleryPage = () => {
           )}
 
           <div className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-lg border border-white/20 bg-white shadow-2xl">
-            <img src={activeItem.url} alt={activeItem.photo?.title || 'Generated preview'} className="max-h-[78vh] min-h-[78vh] w-full object-contain bg-neutral-950" />
+            <div className="relative bg-neutral-950">
+              <img src={activeItem.activeImageUrl} alt={activeItem.photo?.title || 'Generated preview'} className="max-h-[78vh] min-h-[78vh] w-full object-contain" />
+              {activeItem.images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/90 px-3 py-2 shadow-lg">
+
+                  <div className="flex gap-1.5">
+                    {activeItem.images.map((imageUrl, imageIndex) => (
+                      <button
+                        type="button"
+                        key={`${imageUrl}-${imageIndex}`}
+                        onClick={() => setPreviewSlide(imageIndex)}
+                        aria-label={`Show generated image ${imageIndex + 1}`}
+                        className={`h-2.5 w-2.5 rounded-full transition ${imageIndex === activeItem.activeImageIndex ? 'bg-primary-700' : 'bg-neutral-300 hover:bg-primary-300'}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="font-semibold text-neutral-900">{activeItem.photo?.title || 'Generated image'}</h2>
                 <p className="text-sm text-neutral-600">
-                  {previewIndex + 1} of {galleryItems.length}
+                  Set {previewIndex + 1} of {galleryItems.length}
+                  {activeItem.images.length > 1 ? `, image ${activeItem.activeImageIndex + 1} of ${activeItem.images.length}` : ''}
                 </p>
               </div>
               <button type="button" onClick={() => handleDownload(activeItem)} className="btn-primary">
