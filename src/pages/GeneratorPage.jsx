@@ -432,17 +432,33 @@ export const GeneratorPage = () => {
                           </div>
                         </div>
                       ) : (
-                        <label className="flex h-52 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-primary-200 bg-gradient-to-b from-white to-primary-50 px-4 text-center transition hover:border-primary-400">
+                        <label
+                          className={`flex h-52 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-primary-200 bg-gradient-to-b from-white to-primary-50 px-4 text-center transition
+                          ${generating
+                              ? "pointer-events-none opacity-50"
+                              : "hover:border-primary-400"
+                            }`}
+                        >
                           <span className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-primary-100 text-primary-700 transition group-hover:scale-110">
                             <UploadCloud className="h-6 w-6" />
                           </span>
-                          <span className="text-sm font-medium text-neutral-800">Upload {option}</span>
-                          <span className="mt-1 text-xs text-neutral-500">JPG, PNG, or WEBP</span>
+
+                          <span className="text-sm font-medium text-neutral-800">
+                            Upload {option}
+                          </span>
+
+                          <span className="mt-1 text-xs text-neutral-500">
+                            JPG, PNG, or WEBP
+                          </span>
+
                           <input
+                            disabled={generating}
                             type="file"
                             accept="image/*"
                             className="sr-only"
-                            onChange={(event) => handleFileChange(option, event.target.files?.[0])}
+                            onChange={(event) =>
+                              handleFileChange(option, event.target.files?.[0])
+                            }
                           />
                         </label>
                       )}
