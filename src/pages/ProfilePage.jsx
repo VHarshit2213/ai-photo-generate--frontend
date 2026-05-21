@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import { CalendarDays, Loader2, LogOut, Mail, Pencil, ShieldCheck, Sparkles, Trash2, User } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
-import { getInitial, getProfileImageUrl } from '../utils/profileImage';
+import { getInitial } from '../utils/profileImage';
 
 const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const maxImageSize = 5 * 1024 * 1024;
@@ -38,7 +38,8 @@ export const ProfilePage = () => {
     };
   }, [avatarPreview]);
 
-  const profileImage = avatarPreview || getProfileImageUrl(user);
+  const savedProfileImage = user.profileImg;
+  const profileImage = avatarPreview || user.profileImg
   const showProfileImage = profileImage && !avatarLoadError;
 
   useEffect(() => {

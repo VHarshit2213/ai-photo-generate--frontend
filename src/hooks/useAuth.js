@@ -2,9 +2,19 @@ import { useContext, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { authAPI } from "../api/auth";
 import { USER_KEY } from "../api/constants";
-import { toast } from "sonner";
 
-const getUpdatedUser = (response) => response?.data || response;
+const getUpdatedUser = (response, currentUser) => {
+  const updatedUser =
+    response?.data?.user ||
+    response?.data?.profile ||
+    response?.data ||
+    response?.user ||
+    response?.profile ||
+    response;
+
+  if (!updatedUser || typeof updatedUser !== "object") return currentUser;
+  return { ...currentUser, ...updatedUser };
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -78,7 +88,7 @@ export const useAuth = () => {
       setError(null);
       try {
         const response = await authAPI.updateProfile(data);
-        const updatedUser = getUpdatedUser(response);
+        const updatedUser = getUpdatedUser(response, user);
         setUser(updatedUser);
         localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
         return updatedUser;
@@ -87,7 +97,7 @@ export const useAuth = () => {
         throw err;
       }
     },
-    [setUser, setError],
+    [setUser, setError, user],
   );
 
   return {

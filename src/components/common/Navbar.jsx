@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Image, Menu, User, Wand2, X } from 'lucide-react';
 import { useState } from 'react';
-import { getInitial, getProfileImageUrl } from '../../utils/profileImage';
+import { getInitial } from '../../utils/profileImage';
 
 const navItems = [
   { to: '/generate', label: 'Generate', icon: Wand2 },
@@ -16,7 +16,7 @@ export const Navbar = () => {
   const location = useLocation();
 
   const isActive = (path) => location.pathname === path;
-  const profileImage = getProfileImageUrl(user);
+  const profileImage = user.profileImg;
 
   if (!isAuthenticated) return null;
 
